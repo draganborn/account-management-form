@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 
 interface Account {
   id: string;
-  label: Array<{ text: string }> | string; // Метки могут быть как строкой, так и массивом
+label: Array<{ text: string }>;
   type: string;
   login: string;
   password: string | null;
@@ -16,7 +16,7 @@ export const useAccountsStore = defineStore('accounts', {
     addAccount() {
       this.accounts.push({
         id: crypto.randomUUID(),
-        label: '',
+        label: [],
         type: 'Local',
         login: '',
         password: null,
