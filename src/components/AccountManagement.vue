@@ -7,9 +7,13 @@
       разделитель ;
     </p>
     <div class="accounts-grid">
-<div v-for="(account, index) in accounts" :key="account.id" class="account-item">
-<AccountForm :account="account" @delete="deleteAccount(account.id)" />
-</div>
+      <div
+        v-for="(account, index) in accounts"
+        :key="account.id"
+        class="account-item"
+      >
+        <AccountForm :account="account" @delete="deleteAccount(account.id)" />
+      </div>
     </div>
   </div>
 </template>
@@ -18,7 +22,7 @@
 import { defineComponent } from 'vue';
 import { useAccountsStore } from '../stores/accounts';
 import AccountForm from './AccountForm.vue';
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 
 export default defineComponent({
   components: {
@@ -26,20 +30,23 @@ export default defineComponent({
   },
   setup() {
     const accountsStore = useAccountsStore();
-const accounts = computed(() => accountsStore.accounts);
+    const accounts = computed(() => accountsStore.accounts);
+
+    // Загрузка данных из localStorage
+    onMounted(() => {
+      const savedAccounts = localStorage.getItem('accounts');
+      if (savedAccounts) {
+        accountsStore.$state.accounts = JSON.parse(savedAccounts);
+      }
+    });
 
     const addAccount = () => {
       accountsStore.addAccount();
     };
 
-const deleteAccount = (id: string) => {
-  const index = accounts.value.findIndex(acc => acc.id === id);
-  if (index !== -1) {
-    accountsStore.deleteAccount(id);
-  } else {
-    console.error('Account not found:', id);
-  }
-};
+    const deleteAccount = (id: string) => {
+      accountsStore.deleteAccount(id);
+    };
 
     return {
       accounts,

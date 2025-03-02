@@ -1,29 +1,44 @@
 <template>
   <div class="account-form">
-    <div class="form-field">
+    <div class="form-field" :class="{ invalid: errors.label }">
       <label>Метки</label>
-      <input type="text" v-model="account.label" @blur="validateAndSave" />
+      <input
+        type="text"
+        v-model="localAccount.label"
+        @blur="validateAndSave"
+        placeholder="Введите метки через ;"
+      />
     </div>
-    <div class="form-field">
+    <div class="form-field" :class="{ invalid: errors.type }">
       <label>Тип записи</label>
-      <select v-model="account.type" @change="handleTypeChange">
+      <select v-model="localAccount.type" @change="handleTypeChange">
         <option value="LDAP">LDAP</option>
         <option value="Local">Локальная</option>
       </select>
     </div>
-    <div class="form-field">
+    <div class="form-field" :class="{ invalid: errors.login }">
       <label>Логин</label>
-      <input type="text" v-model="account.login" @blur="validateAndSave" />
+      <input
+        type="text"
+        v-model="localAccount.login"
+        @blur="validateAndSave"
+        placeholder="Введите логин"
+      />
     </div>
-    <div class="form-field" v-if="account.type === 'Local'">
+    <div
+      class="form-field"
+      :class="{ invalid: errors.password }"
+      v-if="localAccount.type === 'Local'"
+    >
       <label>Пароль</label>
       <input
         type="password"
-        v-model="account.password"
+        v-model="localAccount.password"
         @blur="validateAndSave"
+        placeholder="Введите пароль"
       />
     </div>
-<button @click="$emit('delete', account.id)">Удалить</button>
+    <button @click="$emit('delete', localAccount.id)">Удалить</button>
   </div>
 </template>
 
@@ -42,28 +57,72 @@ export default defineComponent({
   setup(props, { emit }) {
     const accountsStore = useAccountsStore();
     const localAccount = ref({ ...props.account });
-
-    watchEffect(() => {
-      localAccount.value = { ...props.account }; // Синхронизация с пропсами
+    const errors = ref({
+      label: false,
+      type: false,
+      login: false,
+      password: false,
     });
 
+    // Синхронизация с пропсами
+    watchEffect(() => {
+      localAccount.value = { ...props.account };
+    });
+
+    // Преобразование меток в массив объектов
+    const parseLabels = (labels: string) => {
+      return labels
+        .split(';')
+        .filter(label => label.trim() !== '')
+        .map(label => ({ text: label.trim() }));
+    };
+
+    // Валидация полей
+    const validateFields = () => {
+      errors.value = {
+        label: !localAccount.value.label,
+        type: !localAccount.value.type,
+        login: !localAccount.value.login,
+        password:
+          localAccount.value.type === 'Local' && !localAccount.value.password,
+      };
+
+      return !Object.values(errors.value).some(error => error);
+    };
+
+    // Сохранение учетной записи
     const validateAndSave = () => {
-      if (!localAccount.value.login) return;
-      if (localAccount.value.type === 'Local' && !localAccount.value.password) return;
-      
-      accountsStore.saveAccount(localAccount.value);
-      emit('update:account', localAccount.value);
+      if (validateFields()) {
+        const updatedAccount = {
+          ...localAccount.value,
+          label: parseLabels(localAccount.value.label),
+        };
+        accountsStore.saveAccount(updatedAccount);
+        emit('update:account', updatedAccount);
+      }
+    };
+
+    // Обработка изменения типа записи
+    const handleTypeChange = () => {
+      validateAndSave();
     };
 
     return {
       localAccount,
+      errors,
       validateAndSave,
+      handleTypeChange,
     };
   },
 });
 </script>
 
 <style scoped>
+.invalid input,
+.invalid select {
+  border: 1px solid red;
+}
+
 .account-form {
   display: flex;
   flex-direction: column;
