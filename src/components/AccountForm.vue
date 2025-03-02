@@ -23,43 +23,41 @@
         @blur="validateAndSave"
       />
     </div>
-<button @click="$emit('delete', account)">Удалить</button>
+<button @click="$emit('delete', account.id)">Удалить</button>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch } from 'vue';
+import { defineComponent, ref, watchEffect } from 'vue';
+import type { PropType } from 'vue';
 import { useAccountsStore } from '../stores/accounts';
 
 export default defineComponent({
   props: {
-    account: Object,
+    account: {
+      type: Object as PropType<Account>,
+      required: true,
+    },
   },
   setup(props, { emit }) {
     const accountsStore = useAccountsStore();
     const localAccount = ref({ ...props.account });
 
+    watchEffect(() => {
+      localAccount.value = { ...props.account }; // Синхронизация с пропсами
+    });
+
     const validateAndSave = () => {
-      if (localAccount.value.login && (localAccount.value.type === 'Local' ? localAccount.value.password !== null : true)) {
-        accountsStore.saveAccount(localAccount.value);
-        emit('update:account', localAccount.value);
-      }
+      if (!localAccount.value.login) return;
+      if (localAccount.value.type === 'Local' && !localAccount.value.password) return;
+      
+      accountsStore.saveAccount(localAccount.value);
+      emit('update:account', localAccount.value);
     };
-
-    const handleTypeChange = () => {
-      if (localAccount.value.type === 'LDAP') {
-        localAccount.value.password = null;
-      }
-    };
-
-    watch(localAccount, (newVal) => {
-      emit('update:account', newVal);
-    }, { deep: true });
 
     return {
       localAccount,
-      validateAndSave,  // ✅ Добавляем в return
-      handleTypeChange,
+      validateAndSave,
     };
   },
 });

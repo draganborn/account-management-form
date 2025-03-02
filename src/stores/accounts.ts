@@ -1,7 +1,7 @@
-// stores/accounts.ts
 import { defineStore } from 'pinia';
 
 interface Account {
+  id: string;
   label: string;
   type: string;
   login: string;
@@ -15,26 +15,22 @@ export const useAccountsStore = defineStore('accounts', {
   actions: {
     addAccount() {
       this.accounts.push({
+        id: crypto.randomUUID(),  // ✅ Уникальный ID
         label: '',
         type: 'Local',
         login: '',
         password: null,
       });
     },
-    deleteAccount(index: number) {
-      console.log('Deleting account at index:', index);
-      if (index >= 0 && index < this.accounts.length) {
-        this.accounts.splice(index, 1);
-        console.log('Account deleted:', this.accounts);
-      } else {
-        console.error('Invalid index for deletion:', index);
+    deleteAccount(id: string) {
+      console.log('Deleting account with id:', id);
+      this.accounts = this.accounts.filter(acc => acc.id !== id);
+    },
+    saveAccount(account: Account) {
+      const index = this.accounts.findIndex(acc => acc.id === account.id);
+      if (index !== -1) {
+        this.accounts[index] = { ...account };
       }
     },
-saveAccount(account: Account) {
-  const index = this.accounts.findIndex(acc => acc.login === account.login);
-  if (index !== -1) {
-    this.accounts[index] = { ...account };
-  }
-}
   },
 });

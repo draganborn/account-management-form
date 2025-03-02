@@ -7,9 +7,9 @@
       разделитель ;
     </p>
     <div class="accounts-grid">
-<div v-for="account in accounts" :key="account.login">
-<AccountForm :account="account" @delete="deleteAccount(account)" />
-      </div>
+<div v-for="(account, index) in accounts" :key="account.id" class="account-item">
+<AccountForm :account="account" @delete="deleteAccount(account.id)" />
+</div>
     </div>
   </div>
 </template>
@@ -19,10 +19,6 @@ import { defineComponent } from 'vue';
 import { useAccountsStore } from '../stores/accounts';
 import AccountForm from './AccountForm.vue';
 import { computed } from 'vue';
-
-
-
-
 
 export default defineComponent({
   components: {
@@ -36,12 +32,12 @@ const accounts = computed(() => accountsStore.accounts);
       accountsStore.addAccount();
     };
 
-const deleteAccount = (accountToDelete) => {
-  const index = accounts.value.findIndex(acc => acc.login === accountToDelete.login);
+const deleteAccount = (id: string) => {
+  const index = accounts.value.findIndex(acc => acc.id === id);
   if (index !== -1) {
-    accountsStore.deleteAccount(index);
+    accountsStore.deleteAccount(id);
   } else {
-    console.error('Account not found:', accountToDelete);
+    console.error('Account not found:', id);
   }
 };
 
